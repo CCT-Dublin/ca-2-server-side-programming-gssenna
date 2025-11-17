@@ -1,0 +1,67 @@
+/* Page background and layout, centers and apply gradient background */
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: linear-gradient(135deg, #6B73FF, #000DFF);
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+/* Form container style, ronded corner, and shadow*/
+.container {
+    width: 380px;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    animation: fadeIn 0.5s ease-in-out;
+}
+/* Title Style*/
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+/* Input field for form inputs with borders and spacing */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0 4px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    transition: 0.25s;
+    font-size: 15px;
+}
+/* Highlight input when focused */
+input:focus {
+    border-color: #6B73FF;
+    box-shadow: 0 0 6px rgba(107, 115, 255, 0.4);
+}
+/* Submit button styling */
+button {
+    width: 100%;
+    padding: 12px;
+    background: #6B73FF;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 15px;
+    font-size: 16px;
+    transition: 0.25s;
+}
+/* button hover effect */
+button:hover {
+    background: #000DFF;
+}
+/* Error message text that displays when validating the form */
+.error {
+    color: #ff3b3b;
+    font-size: 13px;
+}
+/* fade- in animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
