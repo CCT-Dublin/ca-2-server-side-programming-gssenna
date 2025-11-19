@@ -57,8 +57,13 @@ button:hover {
 }
 /* Error message text that displays when validating the form */
 .error {
-    color: #ff3b3b;
-    font-size: 13px;
+    color: red;
+    display: block; /* Makes the error message appear below the input */
+    margin-top: 5px; /* Adds a small space between input and error */
+    font-size: 0.9em;
+}
+span.error {
+    min-height: 1.2em; /* Reserve space even if no error */
 }
 /* fade- in animation */
 @keyframes fadeIn {
