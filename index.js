@@ -50,8 +50,9 @@ document.getElementById('userForm').addEventListener('submit', function(e) {
     isValid = false;
     }
 
-    // If all validations pass, submit the form
+    // If all validations pass, show success message and submit
     if (isValid) {
-        this.submit();
+        alert('Form was sent successfully!');
+        this.reset();
     }
 });
