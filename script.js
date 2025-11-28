@@ -1,58 +1,75 @@
 // Listen for form submission
 document.getElementById('userForm').addEventListener('submit', function(e) {
-    e.preventDefault(); // Prevent form from submitting if there are errors
+    e.preventDefault();
 
-    // Clear previous error messages
-    document.getElementById('firstNameError').textContent = '';
-    document.getElementById('secondNameError').textContent = '';
-    document.getElementById('emailError').textContent = '';
-    document.getElementById('phoneError').textContent = '';
-    document.getElementById('eircodeError').textContent = '';
+    // Clear previous errors
+    const clear = id => document.getElementById(id).textContent = '';
+    clear('firstNameError'); clear('secondNameError'); clear('emailError'); clear('phoneError'); clear('eircodeError');
 
-    let isValid = true; // Flag to track if the form is valid
+    let isValid = true;
 
-    // Get values from the form
     const firstName = document.getElementById('firstName').value.trim();
     const secondName = document.getElementById('secondName').value.trim();
     const email = document.getElementById('email').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const eircode = document.getElementById('eircode').value.trim();
 
-    // Validate First Name and Second Name
-    const nameRegex = /^[A-Za-z0-9]{1,20}$/; // Only letters/numbers, max 20 characters
+    // Rules
+    const nameRegex = /^[A-Za-z0-9]{1,20}$/;           // letters or numbers, max 20
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;   // basic email
+    const phoneRegex = /^\d{10}$/;                     // exactly 10 digits
+    const eircodeRegex = /^[0-9][A-Za-z0-9]{5}$/;     // starts with number, alphanumeric, exactly 6 chars
+
     if (!nameRegex.test(firstName)) {
-        document.getElementById('firstNameError').textContent = 'First name must be max 20 characters';
+        document.getElementById('firstNameError').textContent = 'First name: only letters/numbers, max 20 characters.';
         isValid = false;
     }
     if (!nameRegex.test(secondName)) {
-        document.getElementById('secondNameError').textContent = 'Surname must be max 20 characters';
+        document.getElementById('secondNameError').textContent = 'Surname: only letters/numbers, max 20 characters.';
         isValid = false;
     }
 
-    // Validate Email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // Basic email format check
     if (!emailRegex.test(email)) {
-        document.getElementById('emailError').textContent = 'Invalid email format';
+        document.getElementById('emailError').textContent = 'Email must be a valid email address.';
         isValid = false;
     }
 
-    // Validate Phone Number
-    const phoneRegex = /^\d{10}$/; // Exactly 10 digits
     if (!phoneRegex.test(phone)) {
-        document.getElementById('phoneError').textContent = 'Phone must be 10 digits';
+        document.getElementById('phoneError').textContent = 'Phone must contain exactly 10 digits (numbers only).';
         isValid = false;
     }
 
-    // Validate Eircode
-    const eircodeRegex = /^[A-Z]\d{2}[A-Z0-9]{4}$/i;// Checking if the eircode is in irish format
     if (!eircodeRegex.test(eircode)) {
-    document.getElementById('eircodeError').textContent = 'Eircode must follow the Irish format (e.g., D09E20B)';
-    isValid = false;
+        document.getElementById('eircodeError').textContent = 'Eircode must start with a number, be alphanumeric and be exactly 6 characters.';
+        isValid = false;
     }
 
-    // If all validations pass, show success message and submit
+    // If valid, submit via fetch to /submit (example) — prevents relying on PHP
     if (isValid) {
-        alert('Form was sent successfully!');
-        this.reset();
+        // gather data in snake_case to match DB
+        const data = {
+            first_name: firstName,
+            second_name: secondName,
+            email: email,
+            phone: phone,
+            eircode: eircode
+        };
+
+        fetch('/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error('Server error');
+            return res.json();
+        })
+        .then(json => {
+            alert('Form was sent successfully!');
+            this.reset();
+        })
+        .catch(err => {
+            alert('Erro ao submeter: ' + err.message);
+        });
     }
 });
