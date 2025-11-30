@@ -7,32 +7,36 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+    <!-- creation of container class to the css file-->
     <div class="container">
         <h2>Form</h2>
+        <!-- Creation of a form with post method-->
+         <!--First name field-->
     <form id="userForm" action="/submit" method="POST">
         <label>First Name</label>
         <input type="text" id="firstName" name="first_name">
         <span id="firstNameError" class="error"></span>
-
+        <!--Surname name field-->
         <label>Surname</label>
         <input type="text" id="secondName" name="second_name">
         <span id="secondNameError" class="error"></span>
-
+        <!--Email field-->
         <label>Email</label>
         <input type="text" id="email" name="email">
         <span id="emailError" class="error"></span>
-
+        <!--Phone number field-->
         <label>Phone Number</label>
         <input type="text" id="phone" name="phone">
         <span id="phoneError" class="error"></span>
-
+        <!--Eircode field-->
         <label>Eircode</label>
         <input type="text" id="eircode" name="eircode">
         <span id="eircodeError" class="error"></span>
-
+        <!--submit button-->
         <button type="submit">Submit</button>
     </form>
         </div>
+        <!--link to script.js file-->
         <script src="script.js"></script>
 </body>
 </html>
