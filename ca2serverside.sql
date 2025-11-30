@@ -8,3 +8,6 @@ CREATE TABLE IF NOT EXISTS mysql_table (
     phone VARCHAR(20) NOT NULL,
     eircode VARCHAR(10) NOT NULL
 );
+
+use ca2_server_side;
+select * from mysql_table;

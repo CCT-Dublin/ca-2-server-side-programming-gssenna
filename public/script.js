@@ -44,7 +44,7 @@ document.getElementById('userForm').addEventListener('submit', function(e) {
         isValid = false;
     }
 
-    // If valid, submit via fetch to /submit (example) — prevents relying on PHP
+    // If valid, submit via fetch to /submit 
     if (isValid) {
         // gather data in snake_case to match DB
         const data = {

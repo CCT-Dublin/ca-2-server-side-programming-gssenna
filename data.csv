@@ -1,1 +1,5 @@
 first_name;second_name;email;phone;eircode
+John;Doe;john.doe@example.com;0123456789;1ABC23
+Alice2;OBrien;alice@example.com;1234567890;9ZZZ99
+badname!;Smith;bad@example;12345;A1B2C3   
+
