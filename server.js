@@ -1,52 +1,30 @@
-//Express server that serves the form and inserts validated data into MySQL.
-
+// server.js
 const express = require('express');
-const mysql = require('mysql2');
 const path = require('path');
+const { createPool, ensureSchema } = require('./database');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
-// Parse form bodies for regular HTML form submission
 app.use(express.urlencoded({ extended: true }));
-
-// Parse JSON bodies 
 app.use(express.json());
-
-// Serve static files from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve the form at root
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'form.html'));
+// simple request logger middleware
+app.use((req, res, next) => {
+  const now = new Date().toISOString();
+  console.log(`[${now}] ${req.method} ${req.url} - IP: ${req.ip}`);
+  next();
 });
 
-// MySQL connection settings
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '1234', 
-  database: 'CA2_Server_Side'
-});
-
-// Try to connect so we see DB errors early
-connection.connect(err => {
-  if (err) {
-    console.error('MySQL connection error:', err.message);
-  } else {
-    console.log('Connected to MySQL database:', connection.config.database);
-  }
-});
-
-// Validation regex
+// Validation regex (server-side)
 const nameRegex = /^[A-Za-z0-9]{1,20}$/;
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phoneRegex = /^\d{10}$/;
 const eircodeRegex = /^[0-9][A-Za-z0-9]{5}$/;
 
-// POST route to receive form data
-app.post('/submit', (req, res) => {
-  // for form submissions 
+// reusable validation middleware
+function validateBody(req, res, next) {
   const { first_name, second_name, email, phone, eircode } = req.body || {};
   const errors = [];
 
@@ -56,27 +34,80 @@ app.post('/submit', (req, res) => {
   if (!phone || !phoneRegex.test(phone)) errors.push('Invalid phone.');
   if (!eircode || !eircodeRegex.test(eircode)) errors.push('Invalid eircode.');
 
-  if (errors.length > 0) {
-    // If request came from a browser form, redirect with errors:
-    // return errors
-    return res.status(400).json({ ok: false, errors });
+  if (errors.length > 0) return res.status(400).json({ ok: false, errors });
+  next();
+}
+
+// Serve form
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'form.html'));
+});
+
+let pool;
+
+// Route uses ensureSchema middleware to guarantee table exists
+async function ensureSchemaMiddleware(req, res, next) {
+  try {
+    // ensure schema only once; if already done it's cheap
+    await ensureSchema(pool);
+    next();
+  } catch (err) {
+    console.error('Schema check/creation failed:', err);
+    return res.status(500).json({ ok: false, error: 'Server schema initialization error.' });
   }
+}
 
-  const sql = `
-    INSERT INTO mysql_table (first_name, second_name, email, phone, eircode)
-    VALUES (?, ?, ?, ?, ?)
-  `;
+app.post('/submit', validateBody, ensureSchemaMiddleware, async (req, res) => {
+  const { first_name, second_name, email, phone, eircode } = req.body;
 
-  connection.query(sql, [first_name, second_name, email, phone, eircode], (err) => {
-    if (err) {
-      console.error('DB insert error:', err.message);
-      return res.status(500).json({ ok: false, error: 'Database insert error.' });
-    }
-    return res.json({ ok: true, message: 'Record inserted successfully!' });
-  });
+  const insertSql = `INSERT INTO mysql_table (first_name, second_name, email, phone, eircode) VALUES (?, ?, ?, ?, ?)`;
+
+  try {
+    const [result] = await pool.query(insertSql, [first_name, second_name, email, phone, eircode]);
+    return res.json({ ok: true, id: result.insertId });
+  } catch (err) {
+    console.error('DB insert error:', err);
+    return res.status(500).json({ ok: false, error: 'Database insert error.' });
+  }
 });
 
-//link to server running at port 3000
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+// global error handler (last middleware)
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ ok: false, error: 'Internal server error.' });
 });
+
+// start server with DB pool and proper error handling on port conflict
+(async function start() {
+  try {
+    pool = await createPool();
+    // ensure schema at startup too (this reduces first-request latency)
+    await ensureSchema(pool);
+
+    const server = app.listen(PORT, () => {
+      console.log(`Server running at http://localhost:${PORT}`);
+    });
+
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Choose a different PORT or stop the process using it.`);
+        process.exit(1);
+      } else {
+        console.error('Server error:', err);
+        process.exit(1);
+      }
+    });
+
+    // Optional: graceful shutdown
+    process.on('SIGINT', async () => {
+      console.log('Shutting down server...');
+      server.close();
+      try { await pool.end(); } catch(e) {}
+      process.exit(0);
+    });
+
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+})();
